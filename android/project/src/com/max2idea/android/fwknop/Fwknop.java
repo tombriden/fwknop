@@ -29,37 +29,22 @@ import android.os.Bundle;
 import android.util.Log;
 
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.widget.TextView;
-import java.io.InputStream;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceManager;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.Spinner;
 import android.widget.Toast;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.net.URL;
-import java.util.Enumeration;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class Fwknop extends Activity {
 
@@ -81,7 +66,7 @@ public class Fwknop extends Activity {
         ad.show();
     }
     private String output;
-    private Spinner mAllowip;
+    private EditText mAllowip;
     private EditText mPasswd;
     private EditText mHmac;
     private EditText mDestip;
@@ -96,11 +81,6 @@ public class Fwknop extends Activity {
     private String destip_str;
     private String fw_timeout_str;
     private CheckBox mCheck;
-    private String externalIP = "";
-    private String localIP = "";
-    private int IPS_RESOLVED = 1000;
-    private int LOCALIP_NOTRESOLVED = 1001;
-    private int EXTIP_NOTRESOLVED = 1002;
     private int SPA_SENT = 1003;
 
     /** Called when the activity is first created. */
@@ -110,11 +90,6 @@ public class Fwknop extends Activity {
 
         //Installer
         installNativeLibs();
-
-        //Get IPs of client
-        progDialog = ProgressDialog.show(activity, "Resolving External IP", "Please wait...", true);
-        IPResolver p = new IPResolver();
-        p.execute();
 
         //Setup UI
         this.setContentView(R.layout.main);
@@ -148,71 +123,12 @@ public class Fwknop extends Activity {
         public synchronized void handleMessage(Message msg) {
             Bundle b = msg.getData();
             Integer messageType = (Integer) b.get("message_type");
-            if (messageType != null && messageType == IPS_RESOLVED) {
-                progDialog.dismiss();
-            } else if (messageType != null && messageType == EXTIP_NOTRESOLVED) {
-                progDialog.dismiss();
-                UIAlert("Error", "Could not resolve your external IP. This means that "
-                        + "you're not connected to the internet or ifconfig.me "
-                        + "is not be accesible right now", activity);
-            } else if (messageType != null && messageType == LOCALIP_NOTRESOLVED) {
-                progDialog.dismiss();
-                UIAlert("Error", "Could not find any IP, makes sure you have an internet connection", activity);
-            } else if (messageType != null && messageType == SPA_SENT) {
+            if (messageType != null && messageType == SPA_SENT) {
                 Toast.makeText(activity, output, Toast.LENGTH_LONG).show();
             }
 
         }
     };
-
-//    Get Local and External IPs
-    private void getClientIPs() {
-        localIP = getLocalIpAddress();
-        externalIP = getExternalIP();
-        sendHandlerMessage(handler, IPS_RESOLVED);
-    }
-
-
-//    Sets  member variables to IPs
-    private void setIPs() {
-
-        String[] arraySpinner = {"Source IP", "", ""};
-        if (this.localIP != null && !this.localIP.equals("")) {
-            Log.v("setter", this.localIP);
-            arraySpinner[1] = this.localIP;
-        } else {
-            sendHandlerMessage(handler, LOCALIP_NOTRESOLVED);
-            return;
-        }
-
-        if (this.externalIP != null && !this.externalIP.equals("")) {
-            arraySpinner[2] = this.externalIP;
-            Log.v("setter", this.externalIP);
-        } else {
-            sendHandlerMessage(handler, EXTIP_NOTRESOLVED);
-        }
-
-        ArrayAdapter adapter1 = new ArrayAdapter(this, android.R.layout.simple_spinner_item, arraySpinner);
-        adapter1.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        this.mAllowip.setAdapter(adapter1);
-        this.mAllowip.invalidate();
-    }
-    private ProgressDialog progDialog;
-
-//    Async task just in case things take a long time
-    private class IPResolver extends AsyncTask<Void, Void, Void> {
-
-        @Override
-        protected Void doInBackground(Void... arg0) {
-            getClientIPs();
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void test) {
-            setIPs();
-        }
-    }
 
 //    Another Generic Messanger
     public static void sendHandlerMessage(Handler handler, int message_type) {
@@ -273,11 +189,11 @@ public class Fwknop extends Activity {
             return;
         }
         
-        if (this.mAllowip != null && this.mAllowip.getSelectedItem() != null && !this.mAllowip.getSelectedItem().toString().trim().equals("")) {
-            if(mAllowip.getSelectedItem().toString().trim().equals("Source IP")) {
-                this.allowip_str = "0.0.0.0";
+        if (this.mAllowip != null) {
+            if(this.mAllowip.getText().toString().equals("")) {
+                this.allowip_str = "";
             } else {
-                this.allowip_str = mAllowip.getSelectedItem().toString().trim();
+                this.allowip_str = mAllowip.getText().toString().trim();
             }
 
             edit.putString("allowip_str", allowip_str);
@@ -337,9 +253,10 @@ public class Fwknop extends Activity {
         this.mTCPAccessPorts = (EditText) findViewById(R.id.tcpAccessPorts);
         this.mTCPAccessPorts.setText(prefs.getString("tcpAccessPorts_str", "22"));
         this.mUDPAccessPorts = (EditText) findViewById(R.id.udpAccessPorts);
-        this.mUDPAccessPorts.setText(prefs.getString("udpAccessPorts_str", null));
+        this.mUDPAccessPorts.setText(prefs.getString("udpAccessPorts_str", ""));
 
-        this.mAllowip = (Spinner) findViewById(R.id.allowip);
+        this.mAllowip = (EditText) findViewById(R.id.allowip);
+        this.mAllowip.setText(prefs.getString("allowip_str", ""));
 
         this.mDestip = (EditText) findViewById(R.id.destIP);
         this.mDestip.setText(prefs.getString("destip_str", ""));
@@ -408,53 +325,5 @@ public class Fwknop extends Activity {
         if (startApp) {
             startApp();
         }
-    }
-
-
-//    Get the external IP from ifconfig.me
-//    Other sites with similar services are whatismyip.com, whatismyip.org
-    public static String getExternalIP() {
-        URL Url;
-        HttpURLConnection Conn = null;
-        InputStream InStream;
-        InputStreamReader Isr;
-        String extIP = "";
-
-        try {
-            Url = new java.net.URL("http://ifconfig.me/ip");
-            Conn = (HttpURLConnection) Url.openConnection();
-            InStream = Conn.getInputStream();
-            Isr = new java.io.InputStreamReader(InStream);
-            BufferedReader Br = new java.io.BufferedReader(Isr);
-            extIP = Br.readLine();
-            Log.v("External IP", "Your external IP address is " + extIP);
-        } catch (Exception ex) {
-            Logger.getLogger(Fwknop.class.getName()).log(Level.SEVERE, null, ex);
-        } finally {
-//            Isr.close();
-//            InStream.close();
-            Conn.disconnect();
-        }
-        return extIP;
-
-    }
-
-//    This is easier: traverse the interfaces and get the local IPs
-    public static String getLocalIpAddress() {
-        try {
-            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
-                NetworkInterface intf = en.nextElement();
-                for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
-                    InetAddress inetAddress = enumIpAddr.nextElement();
-                    if (!inetAddress.isLoopbackAddress()) {
-                        Log.v("Internal ip", inetAddress.getHostAddress());
-                        return inetAddress.getHostAddress();
-                    }
-                }
-            }
-        } catch (SocketException ex) {
-            Log.e("Internal IP", ex.toString());
-        }
-        return null;
     }
 }

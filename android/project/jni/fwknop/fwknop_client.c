@@ -63,6 +63,7 @@ jstring Java_com_max2idea_android_fwknop_Fwknop_sendSPAPacket(JNIEnv* env,
     fid = (*env)->GetFieldID(env, c, "allowip_str", "Ljava/lang/String;");
     jstring jallowip = (*env)->GetObjectField(env, thiz, fid);
     const char *allowip_str = (*env)->GetStringUTFChars(env, jallowip, 0);
+    char *allowip_str2 = NULL;
 
     fid = (*env)->GetFieldID(env, c, "destip_str", "Ljava/lang/String;");
     jstring jdestip = (*env)->GetObjectField(env, thiz, fid);
@@ -86,9 +87,14 @@ jstring Java_com_max2idea_android_fwknop_Fwknop_sendSPAPacket(JNIEnv* env,
         sprintf(res_msg, "Error: Invalid or missing access string");
         goto cleanup2;
     }
-    if(allowip_str == NULL) {
-        sprintf(res_msg, "Error: Invalid or missing allow IP");
-        goto cleanup2;
+    char free_ip_str = 1;
+    if(allowip_str == NULL || (allowip_str && *allowip_str == 0)) {
+        allowip_str2 = (char*)malloc(sizeof(char) * 8);
+        sprintf(allowip_str2, "0.0.0.0");
+    }
+    else{
+        allowip_str2 = (char*)malloc(sizeof(char) * (strlen(allowip_str) + 1));
+        strcpy(allowip_str2, allowip_str);
     }
     if(destip_str == NULL) {
         sprintf(res_msg, "Error: Invalid or missing destination IP");
@@ -132,7 +138,7 @@ jstring Java_com_max2idea_android_fwknop_Fwknop_sendSPAPacket(JNIEnv* env,
 
     /* Set the spa message string
     */
-    snprintf(spa_msg, MSG_BUFSIZE, "%s,%s", allowip_str, access_str);
+    snprintf(spa_msg, MSG_BUFSIZE, "%s,%s", allowip_str2, access_str);
 
     res = fko_set_spa_message(ctx, spa_msg);
     if (res != FKO_SUCCESS) {
@@ -190,6 +196,8 @@ cleanup:
 cleanup2:
     /* Release mem
     */
+    if(allowip_str2)
+      free(allowip_str2);
     (*env)->ReleaseStringUTFChars(env, jaccess, access_str);
     (*env)->ReleaseStringUTFChars(env, jallowip, allowip_str);
     (*env)->ReleaseStringUTFChars(env, jdestip, destip_str);

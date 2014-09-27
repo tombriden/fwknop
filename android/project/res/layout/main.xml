@@ -16,12 +16,12 @@
             android:text="Allow IP: "
             android:textSize="20dip"
             />
-        <Spinner
+        <EditText
             android:id="@+id/allowip"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:text=""
-            android:singleLine="true"
+            android:hint="Leave blank for source ip"
             android:textSize="20dip"
             />
     </LinearLayout>
