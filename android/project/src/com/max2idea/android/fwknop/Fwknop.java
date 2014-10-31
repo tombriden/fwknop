@@ -31,50 +31,38 @@ import android.util.Log;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.ComponentName;
-import android.content.Context;
 import android.widget.TextView;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.content.res.AssetManager;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceManager;
-import android.util.AttributeSet;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.Toast;
 import java.io.BufferedReader;
-import java.io.DataInputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
-import java.net.MalformedURLException;
 import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.net.URL;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.http.HttpConnection;
 
 public class Fwknop extends Activity {
 
-    public View parent;
     public TextView mOutput;
     private boolean startApp = true;
     public Activity activity = this;
@@ -88,7 +76,6 @@ public class Fwknop extends Activity {
         ad.setButton("OK", new DialogInterface.OnClickListener() {
 
             public void onClick(DialogInterface dialog, int which) {
-                return;
             }
         });
         ad.show();
@@ -144,7 +131,7 @@ public class Fwknop extends Activity {
         Intent i = new Intent(Intent.ACTION_RUN);
         i.setComponent(new ComponentName("org.connectbot", "org.connectbot.HostListActivity"));
         PackageManager p = this.getPackageManager();
-        List list = p.queryIntentActivities(i, p.COMPONENT_ENABLED_STATE_DEFAULT);
+        List list = p.queryIntentActivities(i, PackageManager.COMPONENT_ENABLED_STATE_DEFAULT);
         if (list.isEmpty()) {
             Log.v("SPA", "ConnectBot is not installed");
             Toast.makeText(this, "ConnectBot is not installed", Toast.LENGTH_LONG).show();
@@ -185,15 +172,6 @@ public class Fwknop extends Activity {
         sendHandlerMessage(handler, IPS_RESOLVED);
     }
 
-//    Generic Message to update UI
-    public static void sendHandlerMessage(Handler handler, int message_type, String message_var, String message_value) {
-        Message msg1 = handler.obtainMessage();
-        Bundle b = new Bundle();
-        b.putInt("message_type", message_type);
-        b.putString(message_var, message_value);
-        msg1.setData(b);
-        handler.sendMessage(msg1);
-    }
 
 //    Sets  member variables to IPs
     private void setIPs() {
@@ -245,21 +223,10 @@ public class Fwknop extends Activity {
         handler.sendMessage(msg1);
     }
 
-    public class AutoScrollView extends ScrollView {
-
-        public AutoScrollView(Context context, AttributeSet attrs) {
-            super(context, attrs);
-        }
-
-        public AutoScrollView(Context context) {
-            super(context);
-        }
-    }
-    public AutoScrollView mLyricsScroll;
-
 //   Main event function
-//    Retrives values from saved preferences
+//    Retrieves values from saved preferences
     private void onStartButton() {
+
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor edit = prefs.edit();
@@ -275,7 +242,7 @@ public class Fwknop extends Activity {
                             this.access_str = this.access_str + ",";
                         this.access_str = this.access_str + "tcp/" + port;
                     } catch (Exception e) {
-                        this.UIAlert("Input error", ports[i] + " is not a valid port number", this);
+                        UIAlert("Input error", ports[i] + " is not a valid port number", this);
                         return;
                     }
                 }
@@ -293,7 +260,7 @@ public class Fwknop extends Activity {
                             this.access_str = this.access_str + ",";
                         this.access_str = this.access_str + "udp/" + port;
                     } catch (Exception e) {
-                        this.UIAlert("Input error", ports[i] + " is not a valid port number", this);
+                        UIAlert("Input error", ports[i] + " is not a valid port number", this);
                         return;
                     }
                 }
@@ -302,7 +269,7 @@ public class Fwknop extends Activity {
         }
 
         if(this.access_str.equals("")){
-            this.UIAlert("Input error", "Please enter a TCP or UDP port", this);
+            UIAlert("Input error", "Please enter a TCP or UDP port", this);
             return;
         }
         
@@ -313,7 +280,7 @@ public class Fwknop extends Activity {
                 this.allowip_str = mAllowip.getSelectedItem().toString().trim();
             }
 
-            edit.putString("allowip_str", this.allowip_str);
+            edit.putString("allowip_str", allowip_str);
         } else {
             UIAlert("Input error", "Please use a valid IP address", this);
             return;
@@ -323,7 +290,7 @@ public class Fwknop extends Activity {
             this.passwd_str = mPasswd.getText().toString();
             edit.putString("passwd_str", mPasswd.getText().toString());
         } else {
-            this.UIAlert("Input error", "Please enter a key", this);
+            UIAlert("Input error", "Please enter a key", this);
             return;
         }
 
@@ -340,27 +307,23 @@ public class Fwknop extends Activity {
             this.destip_str = mDestip.getText().toString();
             edit.putString("destip_str", mDestip.getText().toString());
         } else {
-            this.UIAlert("Input error", "Please enter a valid Server address", this);
+            UIAlert("Input error", "Please enter a valid Server address", this);
             return;
         }
 
         if (this.mFwTimeout != null) {
-            int fw_timeout;
             try {
                 Integer.parseInt(this.mFwTimeout.getText().toString());
             } catch (Exception e) {
-                this.UIAlert("Input error", "Please enter a valid timeout value", this);
+                UIAlert("Input error", "Please enter a valid timeout value", this);
                 return;
             }
             this.fw_timeout_str = mFwTimeout.getText().toString();
             edit.putString("fw_timeout_str", mFwTimeout.getText().toString());
         }
 
-        if (this.mCheck != null && this.mCheck.isChecked()) {
-            this.startApp = true;
-        } else {
-            this.startApp = false;
-        }
+        this.startApp = (this.mCheck != null && this.mCheck.isChecked());
+
         edit.putBoolean("app_start", startApp);
         edit.commit();
 
@@ -424,40 +387,16 @@ public class Fwknop extends Activity {
 //        installNativeLib("libfwknop.so", "/data/data/com.max2idea.android.fwknop/lib");
 
         //Load the C library
-        loadNativeLib("libfwknop.so", "/data/data/com.max2idea.android.fwknop/lib");
-    }
-
-    //This is not needed anymore, don't use
-    private void installNativeLib(String lib, String destDir) {
-        if (true) {
-            try {
-                String libLocation = destDir + "/" + lib;
-                AssetManager am = this.getAssets();
-                InputStream is = am.open(lib);
-                OutputStream os = new FileOutputStream(libLocation);
-                byte[] buf = new byte[8092];
-                int n;
-                while ((n = is.read(buf)) > 0) {
-                    os.write(buf, 0, n);
-                }
-                os.close();
-                is.close();
-            } catch (Exception ex) {
-                Log.e("JNIExample", "failed to install native library: " + ex);
-            }
-        }
-
+        loadNativeLib("libfwknop.so", getFilesDir().getPath() + "/../lib");
     }
 
 //    Load the shared lib
     private void loadNativeLib(String lib, String destDir) {
-        if (true) {
-            String libLocation = destDir + "/" + lib;
-            try {
-                System.load(libLocation);
-            } catch (Exception ex) {
-                Log.e("JNIExample", "failed to load native library: " + ex);
-            }
+        String libLocation = destDir + "/" + lib;
+        try {
+            System.load(libLocation);
+        } catch (Exception ex) {
+            Log.e("JNIExample", "failed to load native library: " + ex);
         }
 
     }
@@ -471,52 +410,14 @@ public class Fwknop extends Activity {
         }
     }
 
-//    Not needed
-    public static String sendHttpGet(String url) {
-        HttpConnection hcon = null;
-        DataInputStream dis = null;
-        java.net.URL URL = null;
-        try {
-            URL = new java.net.URL(url);
-        } catch (MalformedURLException ex) {
-            Logger.getLogger(Fwknop.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        StringBuffer responseMessage = new StringBuffer();
-
-        try {
-            // obtain a DataInputStream from the HttpConnection
-            dis = new DataInputStream(URL.openStream());
-
-            // retrieve the response from the server
-            int ch;
-            while ((ch = dis.read()) != -1) {
-                responseMessage.append((char) ch);
-            }//end while ( ( ch = dis.read() ) != -1 )
-        } catch (Exception e) {
-            e.printStackTrace();
-            responseMessage.append(e.getMessage());
-        } finally {
-            try {
-                if (hcon != null) {
-                    hcon.close();
-                }
-                if (dis != null) {
-                    dis.close();
-                }
-            } catch (IOException ioe) {
-                ioe.printStackTrace();
-            }//end try/catch
-        }//end try/catch/finally
-        return responseMessage.toString();
-    }//end sendHttpGet( String )
 
 //    Get the external IP from ifconfig.me
 //    Other sites with similar services are whatismyip.com, whatismyip.org
     public static String getExternalIP() {
-        URL Url = null;
+        URL Url;
         HttpURLConnection Conn = null;
-        InputStream InStream = null;
-        InputStreamReader Isr = null;
+        InputStream InStream;
+        InputStreamReader Isr;
         String extIP = "";
 
         try {
@@ -546,8 +447,8 @@ public class Fwknop extends Activity {
                 for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
                     InetAddress inetAddress = enumIpAddr.nextElement();
                     if (!inetAddress.isLoopbackAddress()) {
-                        Log.v("Internal ip", inetAddress.getHostAddress().toString());
-                        return inetAddress.getHostAddress().toString();
+                        Log.v("Internal ip", inetAddress.getHostAddress());
+                        return inetAddress.getHostAddress();
                     }
                 }
             }
