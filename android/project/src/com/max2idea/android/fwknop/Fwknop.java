@@ -137,7 +137,7 @@ public class Fwknop extends Activity {
             Toast.makeText(this, "ConnectBot is not installed", Toast.LENGTH_LONG).show();
         } else {
             Log.v("SPA", "Starting connectBot");
-            Toast.makeText(this, "Starting ConnectBot", Toast.LENGTH_LONG);
+            Toast.makeText(this, "Starting ConnectBot", Toast.LENGTH_LONG).show();
             startActivity(i);
         }
     }
