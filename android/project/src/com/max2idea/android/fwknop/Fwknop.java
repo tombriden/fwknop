@@ -35,8 +35,12 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.nfc.NdefMessage;
+import android.nfc.NdefRecord;
+import android.nfc.NfcAdapter;
 import android.os.Handler;
 import android.os.Message;
+import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -44,6 +48,7 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
+import java.util.Arrays;
 import java.util.List;
 
 public class Fwknop extends Activity {
@@ -94,7 +99,47 @@ public class Fwknop extends Activity {
         //Setup UI
         this.setContentView(R.layout.main);
         this.setupWidgets();
+    }
+  
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Check to see that the Activity started due to an Android Beam
+        Intent intent = getIntent();
+        if(NfcAdapter.ACTION_NDEF_DISCOVERED.equals(intent.getAction())) {
+            Parcelable[] rawMsgs = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
+            NdefMessage msg = null;
+            if (rawMsgs != null && rawMsgs.length > 0) {
+                msg = (NdefMessage) rawMsgs[0];
 
+                NdefRecord[] contentRecs = msg.getRecords();
+                for (NdefRecord rec : contentRecs) {
+                    if (rec.getTnf() == NdefRecord.TNF_WELL_KNOWN &&
+                            Arrays.equals(rec.getType(),  NdefRecord.RTD_TEXT)) {
+
+                        byte[] payload = rec.getPayload();
+
+                        try {
+                          //Get the Text Encoding
+                          String textEncoding = ((payload[0] & 0200) == 0) ? "UTF-8" : "UTF-16";
+
+                          //Get the Language Code
+                          int languageCodeLength = payload[0] & 0077;
+                          String languageCode = new String(payload, 1, languageCodeLength, "US-ASCII");
+
+                          //Get the Text
+                          String text = new String(payload, languageCodeLength + 1, payload.length - languageCodeLength - 1, textEncoding);
+
+                          if (text.equals("fwknop"))
+                            onStartButton();
+                        } catch (Exception e) {
+                          Toast.makeText(this, "NFC Tag parsing error", Toast.LENGTH_LONG).show();
+                        }
+                    }
+                }
+            }
+            finish();
+        }
     }
 
     public void sendSPA() {
