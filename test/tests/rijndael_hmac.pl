@@ -73,15 +73,45 @@
     {
         'category' => 'Rijndael+HMAC',
         'subcategory' => 'client+server',
+        'detail'   => '3 cycles (tcp/22 ssh)',
+        'function' => \&spa_cycle,
+        'cmdline'  => $default_client_hmac_args,
+        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'def'} -a $cf{'hmac_access'} " .
+            "-d $default_digest_file -p $default_pid_file $intf_str",
+        'fw_rule_created' => $NEW_RULE_REQUIRED,
+        'fw_rule_removed' => $NEW_RULE_REMOVED,
+        'key_file' => $cf{'rc_hmac_b64_key'},
+        'client_cycles_per_server_instance' => 3,
+    },
+
+    {
+        'category' => 'Rijndael+HMAC',
+        'subcategory' => 'client+server',
         'detail'   => '--ipt-no-check-support',
         'function' => \&spa_cycle,
         'cmdline'  => $default_client_hmac_args,
         'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'def'} -a $cf{'hmac_access'} " .
-            "-d $default_digest_file -p $default_pid_file $intf_str --no-ipt-check-support",
+            "-d $default_digest_file -p $default_pid_file " .
+            "$intf_str --no-ipt-check-support --no-firewd-check-support",
         'fw_rule_created' => $NEW_RULE_REQUIRED,
         'fw_rule_removed' => $NEW_RULE_REMOVED,
         'key_file' => $cf{'rc_hmac_b64_key'},
     },
+    {
+        'category' => 'Rijndael+HMAC',
+        'subcategory' => 'client+server',
+        'detail'   => '3 cycles --ipt-no-check-support',
+        'function' => \&spa_cycle,
+        'cmdline'  => $default_client_hmac_args,
+        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'def'} -a $cf{'hmac_access'} " .
+            "-d $default_digest_file -p $default_pid_file " .
+            "$intf_str --no-ipt-check-support --no-firewd-check-support",
+        'fw_rule_created' => $NEW_RULE_REQUIRED,
+        'fw_rule_removed' => $NEW_RULE_REMOVED,
+        'key_file' => $cf{'rc_hmac_b64_key'},
+        'client_cycles_per_server_instance' => 3,
+    },
+
     {
         'category' => 'Rijndael+HMAC',
         'subcategory' => 'client+server',
@@ -90,7 +120,8 @@
         'cmdline' => "$fwknopCmd -A udp/53 -a $fake_ip -D $loopback_ip --rc-file " .
             "$cf{'rc_hmac_b64_key'} $verbose_str",
         'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'def'} -a $cf{'hmac_access'} " .
-            "-d $default_digest_file -p $default_pid_file $intf_str --no-ipt-check-support",
+            "-d $default_digest_file -p $default_pid_file $intf_str " .
+            "--no-ipt-check-support --no-firewd-check-support",
         'fw_rule_created' => $NEW_RULE_REQUIRED,
         'fw_rule_removed' => $NEW_RULE_REMOVED,
         'key_file' => $cf{'rc_hmac_b64_key'},
@@ -98,10 +129,10 @@
     {
         'category' => 'Rijndael+HMAC',
         'subcategory' => 'client+server',
-        'detail'   => 'iptables OUTPUT chain',
+        'detail'   => "$FW_TYPE OUTPUT chain",
         'function' => \&spa_cycle,
         'cmdline'  => $default_client_hmac_args,
-        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'ipt_output_chain'} -a $cf{'hmac_access'} " .
+        'fwknopd_cmdline' => qq/$fwknopdCmd -c $cf{"${fw_conf_prefix}_output_chain"} -a $cf{'hmac_access'} / .
             "-d $default_digest_file -p $default_pid_file $intf_str",
         'fw_rule_created' => $NEW_RULE_REQUIRED,
         'fw_rule_removed' => $NEW_RULE_REMOVED,
@@ -240,15 +271,15 @@
     {
         'category' => 'Rijndael+HMAC',
         'subcategory' => 'client+server',
-        'detail'   => 'iptables custom input chain',
+        'detail'   => "$FW_TYPE custom input chain",
         'function' => \&spa_cycle,
         'cmdline'  => $default_client_hmac_args,
-        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'custom_input_chain'} -a $cf{'hmac_access'} " .
+        'fwknopd_cmdline' => qq/$fwknopdCmd -c $cf{"${fw_conf_prefix}_custom_input_chain"} -a $cf{'hmac_access'} / .
             "-d $default_digest_file -p $default_pid_file $intf_str",
         'server_positive_output_matches' => [qr/FWKNOP_INPUT_TEST\s\(1\sreferences/],
         'fw_rule_created' => $NEW_RULE_REQUIRED,
         'fw_rule_removed' => $NEW_RULE_REMOVED,
-        'server_conf'     => $cf{'custom_input_chain'},
+        'server_conf'     => $cf{"${fw_conf_prefix}_custom_input_chain"},
         'key_file' => $cf{'rc_hmac_b64_key'},
     },
 
@@ -272,10 +303,10 @@
     {
         'category' => 'Rijndael+HMAC',
         'subcategory' => 'client+server',
-        'detail'   => 'iptables - no flush at init',
+        'detail'   => "$FW_TYPE - no flush at init",
         'function' => \&iptables_no_flush_init_exit,
         'cmdline'  => $default_client_hmac_args,
-        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'no_flush_init'} -a $cf{'hmac_access'} " .
+        'fwknopd_cmdline' => qq/$fwknopdCmd -c $cf{"${fw_conf_prefix}_no_flush_init"} -a $cf{'hmac_access'} / .
             "-d $default_digest_file -p $default_pid_file $intf_str",
         'fw_rule_created' => $NEW_RULE_REQUIRED,
         'fw_rule_removed' => $NEW_RULE_REMOVED,
@@ -284,10 +315,10 @@
     {
         'category' => 'Rijndael+HMAC',
         'subcategory' => 'client+server',
-        'detail'   => 'iptables - no flush at exit',
+        'detail'   => "$FW_TYPE - no flush at exit",
         'function' => \&iptables_no_flush_init_exit,
         'cmdline'  => $default_client_hmac_args,
-        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'no_flush_exit'} -a $cf{'hmac_access'} " .
+        'fwknopd_cmdline' => qq/$fwknopdCmd -c $cf{"${fw_conf_prefix}_no_flush_exit"} -a $cf{'hmac_access'} / .
             "-d $default_digest_file -p $default_pid_file $intf_str",
         'fw_rule_created' => $NEW_RULE_REQUIRED,
         'fw_rule_removed' => $NEW_RULE_REMOVED,
@@ -296,10 +327,10 @@
     {
         'category' => 'Rijndael+HMAC',
         'subcategory' => 'client+server',
-        'detail'   => 'iptables - no flush at init or exit',
+        'detail'   => "$FW_TYPE - no flush at init or exit",
         'function' => \&iptables_no_flush_init_exit,
         'cmdline'  => $default_client_hmac_args,
-        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'no_flush_init_or_exit'} -a $cf{'hmac_access'} " .
+        'fwknopd_cmdline' => qq/$fwknopdCmd -c $cf{"${fw_conf_prefix}_no_flush_init_or_exit"} -a $cf{'hmac_access'} / .
             "-d $default_digest_file -p $default_pid_file $intf_str",
         'fw_rule_created' => $NEW_RULE_REQUIRED,
         'fw_rule_removed' => $NEW_RULE_REMOVED,
@@ -599,7 +630,7 @@
         'category' => 'Rijndael+HMAC',
         'subcategory' => 'client',
         'detail'   => "--last-cmd",
-        'function' => \&generic_exec,
+        'function' => \&run_last_args,
         'cmdline' => "$fwknopCmd --last-cmd --save-args-file $tmp_args_file " .
             "$verbose_str",
     },
@@ -972,6 +1003,42 @@
 
     {
         'category' => 'Rijndael+HMAC',
+        'subcategory' => 'client+server',
+        'detail'   => "UDP server --udp-server / tcp/22",
+        'function' => \&spa_cycle,
+        'cmdline'  => $default_client_hmac_args,
+        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'def'} -a $cf{'hmac_access'} " .
+            "-d $default_digest_file -p $default_pid_file $intf_str --udp-server -vvv",
+        'fw_rule_created' => $NEW_RULE_REQUIRED,
+        'fw_rule_removed' => $NEW_RULE_REMOVED,
+    },
+    {
+        'category' => 'Rijndael+HMAC',
+        'subcategory' => 'client+server',
+        'detail'   => "3 cycles UDP server / tcp/22",
+        'function' => \&spa_cycle,
+        'cmdline'  => $default_client_hmac_args,
+        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'def'} -a $cf{'hmac_access'} " .
+            "-d $default_digest_file -p $default_pid_file $intf_str --udp-server -vvv",
+        'fw_rule_created' => $NEW_RULE_REQUIRED,
+        'fw_rule_removed' => $NEW_RULE_REMOVED,
+        'client_cycles_per_server_instance' => 3,
+    },
+
+    {
+        'category' => 'Rijndael+HMAC',
+        'subcategory' => 'client+server',
+        'detail'   => "UDP server conf / tcp/22",
+        'function' => \&spa_cycle,
+        'cmdline'  => $default_client_hmac_args,
+        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'udp_server'} -a $cf{'hmac_access'} " .
+            "-d $default_digest_file -p $default_pid_file $intf_str",
+        'fw_rule_created' => $NEW_RULE_REQUIRED,
+        'fw_rule_removed' => $NEW_RULE_REMOVED,
+    },
+
+    {
+        'category' => 'Rijndael+HMAC',
         'subcategory' => 'client',
         'detail'   => 'validate digest type arg',
         'function' => \&generic_exec,
@@ -1045,6 +1112,7 @@
         ### check for the first stanza that does not allow tcp/80 - the
         ### second stanza allows this
         'server_positive_output_matches' => [qr/stanza #1\)\sOne\sor\smore\srequested\sprotocol\/ports\swas\sdenied/],
+        'weak_server_receive_check' => $YES,
         'fw_rule_created' => $NEW_RULE_REQUIRED,
         'fw_rule_removed' => $NEW_RULE_REMOVED,
         'key_file' => $cf{'rc_hmac_b64_key'},
@@ -1093,7 +1161,7 @@
         'function' => \&spa_cycle,
         'cmdline'  => "$default_client_args_no_get_key --rc-file " .
             "$cf{'rc_hmac_b64_key'} -N $internal_nat_host:22",
-        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'nat'} -a $cf{'hmac_open_ports_access'} " .
+        'fwknopd_cmdline' => qq/$fwknopdCmd -c $cf{"${fw_conf_prefix}_nat"} -a $cf{'hmac_open_ports_access'} / .
             "-d $default_digest_file -p $default_pid_file $intf_str",
         'server_positive_output_matches' => [
             qr/FWKNOP_FORWARD\s.*dport\s22\s/,
@@ -1101,7 +1169,7 @@
         'fw_rule_created' => $NEW_RULE_REQUIRED,
         'fw_rule_removed' => $NEW_RULE_REMOVED,
         'key_file' => $cf{'rc_hmac_b64_key'},
-        'server_conf' => $cf{'nat'},
+        'server_conf' => $cf{"${fw_conf_prefix}_nat"},
     },
     {
         'category' => 'Rijndael+HMAC',
@@ -1110,7 +1178,7 @@
         'function' => \&spa_cycle,
         'cmdline'  => "$default_client_args_no_get_key --rc-file " .
             "$cf{'rc_hmac_b64_key'} -N $internal_nat_host:22",
-        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'snat'} -a $cf{'hmac_open_ports_access'} " .
+        'fwknopd_cmdline' => qq/$fwknopdCmd -c $cf{"${fw_conf_prefix}_snat"} -a $cf{'hmac_open_ports_access'} / .
             "-d $default_digest_file -p $default_pid_file $intf_str",
         'server_positive_output_matches' => [
             qr/FWKNOP_FORWARD\s.*dport\s22\s/,
@@ -1119,7 +1187,7 @@
         'fw_rule_created' => $NEW_RULE_REQUIRED,
         'fw_rule_removed' => $NEW_RULE_REMOVED,
         'key_file' => $cf{'rc_hmac_b64_key'},
-        'server_conf' => $cf{'snat'},
+        'server_conf' => $cf{"${fw_conf_prefix}_snat"},
     },
     {
         'category' => 'Rijndael+HMAC',
@@ -1128,7 +1196,7 @@
         'function' => \&spa_cycle,
         'cmdline'  => "$default_client_args_no_get_key --rc-file " .
             "$cf{'rc_hmac_b64_key'} -N $internal_nat_host:22",
-        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'snat_no_translate_ip'} -a $cf{'hmac_open_ports_access'} " .
+        'fwknopd_cmdline' => qq/$fwknopdCmd -c $cf{"${fw_conf_prefix}_snat_no_translate_ip"} -a $cf{'hmac_open_ports_access'} / .
             "-d $default_digest_file -p $default_pid_file $intf_str",
         'server_positive_output_matches' => [
             qr/FWKNOP_FORWARD\s.*dport\s22\s/,
@@ -1139,16 +1207,16 @@
         'fw_rule_created' => $NEW_RULE_REQUIRED,
         'fw_rule_removed' => $NEW_RULE_REMOVED,
         'key_file' => $cf{'rc_hmac_b64_key'},
-        'server_conf' => $cf{'snat_no_translate_ip'},
+        'server_conf' => $cf{"${fw_conf_prefix}_snat_no_translate_ip"},
     },
     {
         'category' => 'Rijndael+HMAC',
         'subcategory' => 'client+server',
-        'detail'   => "iptables NAT custom chain",
+        'detail'   => "$FW_TYPE NAT custom chain",
         'function' => \&spa_cycle,
         'cmdline'  => "$default_client_args_no_get_key --rc-file " .
             "$cf{'rc_hmac_b64_key'} -N $internal_nat_host:22",
-        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'custom_nat_chain'} -a $cf{'hmac_open_ports_access'} " .
+        'fwknopd_cmdline' => qq/$fwknopdCmd -c $cf{"${fw_conf_prefix}_custom_nat_chain"} -a $cf{'hmac_open_ports_access'} / .
             "-d $default_digest_file -p $default_pid_file $intf_str",
         'server_positive_output_matches' => [
             qr/FWKNOP_FORWARD_TEST\s.*dport\s22\s/,
@@ -1156,7 +1224,7 @@
         'fw_rule_created' => $NEW_RULE_REQUIRED,
         'fw_rule_removed' => $NEW_RULE_REMOVED,
         'key_file' => $cf{'rc_hmac_b64_key'},
-        'server_conf' => $cf{'custom_nat_chain'},
+        'server_conf' => $cf{"${fw_conf_prefix}_custom_nat_chain"},
     },
 
     {
@@ -1166,14 +1234,14 @@
         'function' => \&spa_cycle,
         'cmdline' => "$fwknopCmd -A tcp/80 -a $fake_ip -D $loopback_ip --rc-file " .
             "$cf{'rc_hmac_b64_key'} $verbose_str -N $internal_nat_host:22",
-        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'nat'} -a $cf{'hmac_open_ports_access'} " .
+        'fwknopd_cmdline' => qq/$fwknopdCmd -c $cf{"${fw_conf_prefix}_nat"} -a $cf{'hmac_open_ports_access'} / .
             "-d $default_digest_file -p $default_pid_file $intf_str",
         'server_positive_output_matches' => [
             qr/FWKNOP_FORWARD\s.*dport\s22\s/,
             qr/\*\/\sto\:$internal_nat_host\:22/i],
         'fw_rule_created' => $NEW_RULE_REQUIRED,
         'fw_rule_removed' => $NEW_RULE_REMOVED,
-        'server_conf' => $cf{'nat'},
+        'server_conf' => $cf{"${fw_conf_prefix}_nat"},
     },
 
     {
@@ -1194,13 +1262,13 @@
         'cmdline'  => $default_client_args,
         'cmdline'  => "$default_client_args_no_get_key --rc-file " .
             $cf{'rc_hmac_b64_key'},
-        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'nat'} -a $cf{'hmac_force_nat_access'} " .
+        'fwknopd_cmdline' => qq/$fwknopdCmd -c $cf{"${fw_conf_prefix}_nat"} -a $cf{'hmac_force_nat_access'} / .
             "-d $default_digest_file -p $default_pid_file $intf_str",
         'server_positive_output_matches' => [qr/\*\/\sto\:$force_nat_host\:22/i],
         'server_negative_output_matches' => [qr/\*\/\sto\:$internal_nat_host\:22/i],
         'fw_rule_created' => $NEW_RULE_REQUIRED,
         'fw_rule_removed' => $NEW_RULE_REMOVED,
-        'server_conf' => $cf{'nat'},
+        'server_conf' => $cf{"${fw_conf_prefix}_nat"},
         'key_file' => $cf{'rc_hmac_b64_key'},
     },
     {
@@ -1211,7 +1279,7 @@
         'cmdline'  => $default_client_args,
         'cmdline'  => "$default_client_args_no_get_key --rc-file " .
             $cf{'rc_hmac_b64_key'},
-        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'snat'} -a $cf{'hmac_force_snat_access'} " .
+        'fwknopd_cmdline' => qq/$fwknopdCmd -c $cf{"${fw_conf_prefix}_snat"} -a $cf{'hmac_force_snat_access'} / .
             "-d $default_digest_file -p $default_pid_file $intf_str",
         'server_positive_output_matches' => [qr/DNAT\s.*\*\/\sto\:$force_nat_host2\:22/i,
             qr/SNAT\s.*\*\/\sto\:$force_snat_host\:22/],
@@ -1219,7 +1287,7 @@
             qr/\*\/\sto\:$force_nat_host\:22/i],
         'fw_rule_created' => $NEW_RULE_REQUIRED,
         'fw_rule_removed' => $NEW_RULE_REMOVED,
-        'server_conf' => $cf{'snat'},
+        'server_conf' => $cf{"${fw_conf_prefix}_snat"},
         'key_file' => $cf{'rc_hmac_b64_key'},
     },
     {
@@ -1230,7 +1298,7 @@
         'cmdline'  => $default_client_args,
         'cmdline'  => "$default_client_args_no_get_key --rc-file " .
             $cf{'rc_hmac_b64_key'},
-        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'snat'} -a $cf{'hmac_force_snat_access'} " .
+        'fwknopd_cmdline' => qq/$fwknopdCmd -c $cf{"${fw_conf_prefix}_snat"} -a $cf{'hmac_force_snat_access'} / .
             "-d $default_digest_file -p $default_pid_file $intf_str",
         'server_positive_output_matches' => [qr/DNAT\s.*\*\/\sto\:$force_nat_host2\:22/i,
             qr/SNAT\s.*\*\/\sto\:$force_snat_host\:22/],
@@ -1238,7 +1306,7 @@
             qr/\*\/\sto\:$force_nat_host\:22/i],
         'fw_rule_created' => $NEW_RULE_REQUIRED,
         'fw_rule_removed' => $NEW_RULE_REMOVED,
-        'server_conf' => $cf{'snat'},
+        'server_conf' => $cf{"${fw_conf_prefix}_snat"},
         'key_file' => $cf{'rc_hmac_b64_key'},
         'iptables_rm_chains_after_server_start' => $YES,
     },
@@ -1250,7 +1318,7 @@
         'cmdline'  => $default_client_args,
         'cmdline'  => "$default_client_args_no_get_key --rc-file " .
             $cf{'rc_hmac_b64_key'},
-        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'snat_no_translate_ip'} -a $cf{'hmac_force_masq_access'} " .
+        'fwknopd_cmdline' => qq/$fwknopdCmd -c $cf{"${fw_conf_prefix}_snat_no_translate_ip"} -a $cf{'hmac_force_masq_access'} / .
             "-d $default_digest_file -p $default_pid_file $intf_str",
         'server_positive_output_matches' => [qr/DNAT\s.*\*\/\sto\:$force_nat_host2\:22/i,
             qr/MASQUERADE\s.*\s$force_nat_host2\s.*\smasq\sports\:\s22/],
@@ -1258,7 +1326,7 @@
             qr/\*\/\sto\:$force_nat_host\:22/i],
         'fw_rule_created' => $NEW_RULE_REQUIRED,
         'fw_rule_removed' => $NEW_RULE_REMOVED,
-        'server_conf' => $cf{'snat_no_translate_ip'},
+        'server_conf' => $cf{"${fw_conf_prefix}_snat_no_translate_ip"},
         'key_file' => $cf{'rc_hmac_b64_key'},
     },
     {
@@ -1269,7 +1337,7 @@
         'cmdline'  => $default_client_args,
         'cmdline'  => "$default_client_args_no_get_key --rc-file " .
             $cf{'rc_hmac_b64_key'},
-        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'snat_no_translate_ip'} -a $cf{'hmac_force_masq_access'} " .
+        'fwknopd_cmdline' => qq/$fwknopdCmd -c $cf{"${fw_conf_prefix}_snat_no_translate_ip"} -a $cf{'hmac_force_masq_access'} / .
             "-d $default_digest_file -p $default_pid_file $intf_str",
         'server_positive_output_matches' => [qr/DNAT\s.*\*\/\sto\:$force_nat_host2\:22/i,
             qr/MASQUERADE\s.*\s$force_nat_host2\s.*\smasq\sports\:\s22/],
@@ -1277,25 +1345,25 @@
             qr/\*\/\sto\:$force_nat_host\:22/i],
         'fw_rule_created' => $NEW_RULE_REQUIRED,
         'fw_rule_removed' => $NEW_RULE_REMOVED,
-        'server_conf' => $cf{'snat_no_translate_ip'},
+        'server_conf' => $cf{"${fw_conf_prefix}_snat_no_translate_ip"},
         'key_file' => $cf{'rc_hmac_b64_key'},
         'iptables_rm_chains_after_server_start' => $YES,
     },
     {
         'category' => 'Rijndael+HMAC',
         'subcategory' => 'client+server',
-        'detail'   => "force NAT (iptables flush)",
+        'detail'   => "force NAT ($FW_TYPE flush)",
         'function' => \&spa_cycle,
         'cmdline'  => $default_client_args,
         'cmdline'  => "$default_client_args_no_get_key --rc-file " .
             $cf{'rc_hmac_b64_key'},
-        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'nat'} -a $cf{'hmac_force_nat_access'} " .
+        'fwknopd_cmdline' => qq/$fwknopdCmd -c $cf{"${fw_conf_prefix}_nat"} -a $cf{'hmac_force_nat_access'} / .
             "-d $default_digest_file -p $default_pid_file $intf_str",
         'server_positive_output_matches' => [qr/\*\/\sto\:$force_nat_host\:22/i],
         'server_negative_output_matches' => [qr/\*\/\sto\:$internal_nat_host\:22/i],
         'fw_rule_created' => $NEW_RULE_REQUIRED,
         'fw_rule_removed' => $NEW_RULE_REMOVED,
-        'server_conf' => $cf{'nat'},
+        'server_conf' => $cf{"${fw_conf_prefix}_nat"},
         'key_file' => $cf{'rc_hmac_b64_key'},
         'iptables_rm_chains_after_server_start' => $YES,
     },
@@ -1306,31 +1374,31 @@
         'function' => \&spa_cycle,
         'cmdline'  => "$default_client_args_no_get_key --rc-file " .
             "$cf{'rc_hmac_b64_key'} --nat-local",
-        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'local_nat'} -a $cf{'hmac_force_nat_access'} " .
+        'fwknopd_cmdline' => qq/$fwknopdCmd -c $cf{"${fw_conf_prefix}_local_nat"} -a $cf{'hmac_force_nat_access'} / .
             "-d $default_digest_file -p $default_pid_file $intf_str",
         'server_positive_output_matches' => [qr/\*\/\sto\:$force_nat_host\:22/i,
             qr/FWKNOP_INPUT.*dport\s22.*\sACCEPT/],
         'server_negative_output_matches' => [qr/\*\/\sto\:$internal_nat_host\:22/i],
         'fw_rule_created' => $NEW_RULE_REQUIRED,
         'fw_rule_removed' => $NEW_RULE_REMOVED,
-        'server_conf' => $cf{'local_nat'},
+        'server_conf' => $cf{"${fw_conf_prefix}_local_nat"},
         'key_file' => $cf{'rc_hmac_b64_key'},
     },
     {
         'category' => 'Rijndael+HMAC',
         'subcategory' => 'client+server',
-        'detail'   => "local NAT (iptables flush)",
+        'detail'   => "local NAT ($FW_TYPE flush)",
         'function' => \&spa_cycle,
         'cmdline'  => "$default_client_args_no_get_key --rc-file " .
             "$cf{'rc_hmac_b64_key'} --nat-local",
-        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'local_nat'} -a $cf{'hmac_force_nat_access'} " .
+        'fwknopd_cmdline' => qq/$fwknopdCmd -c $cf{"${fw_conf_prefix}_local_nat"} -a $cf{'hmac_force_nat_access'} / .
             "-d $default_digest_file -p $default_pid_file $intf_str",
         'server_positive_output_matches' => [qr/\*\/\sto\:$force_nat_host\:22/i,
             qr/FWKNOP_INPUT.*dport\s22.*\sACCEPT/],
         'server_negative_output_matches' => [qr/\*\/\sto\:$internal_nat_host\:22/i],
         'fw_rule_created' => $NEW_RULE_REQUIRED,
         'fw_rule_removed' => $NEW_RULE_REMOVED,
-        'server_conf' => $cf{'local_nat'},
+        'server_conf' => $cf{"${fw_conf_prefix}_local_nat"},
         'key_file' => $cf{'rc_hmac_b64_key'},
         'iptables_rm_chains_after_server_start' => $YES,
     },
@@ -1341,31 +1409,31 @@
         'function' => \&spa_cycle,
         'cmdline' => "$fwknopCmd -A tcp/22 -a $fake_ip -D $loopback_ip --rc-file " .
             "$cf{'rc_hmac_b64_key'} $verbose_str --nat-local --nat-port 80",
-        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'local_nat'} -a $cf{'hmac_access'} " .
+        'fwknopd_cmdline' => qq/$fwknopdCmd -c $cf{"${fw_conf_prefix}_local_nat"} -a $cf{'hmac_access'} / .
             "-d $default_digest_file -p $default_pid_file $intf_str",
         'server_positive_output_matches' => [qr|\s\*\/\sto\:$loopback_ip\:22|i,
             qr/ACCEPT\s{2}.*\s0\.0\.0\.0\/0\s+tcp\sdpt\:22\s/],
         'server_negative_output_matches' => [qr/\*\/\sto\:$internal_nat_host\:22/i],
         'fw_rule_created' => $NEW_RULE_REQUIRED,
         'fw_rule_removed' => $NEW_RULE_REMOVED,
-        'server_conf' => $cf{'local_nat'},
+        'server_conf' => $cf{"${fw_conf_prefix}_local_nat"},
         'key_file' => $cf{'rc_hmac_b64_key'},
     },
     {
         'category' => 'Rijndael+HMAC',
         'subcategory' => 'client+server',
-        'detail'   => "local (non-force) NAT (ipt flush)",
+        'detail'   => "local (non-force) NAT ($FW_TYPE flush)",
         'function' => \&spa_cycle,
         'cmdline' => "$fwknopCmd -A tcp/22 -a $fake_ip -D $loopback_ip --rc-file " .
             "$cf{'rc_hmac_b64_key'} $verbose_str --nat-local --nat-port 80",
-        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'local_nat'} -a $cf{'hmac_access'} " .
+        'fwknopd_cmdline' => qq/$fwknopdCmd -c $cf{"${fw_conf_prefix}_local_nat"} -a $cf{'hmac_access'} / .
             "-d $default_digest_file -p $default_pid_file $intf_str",
         'server_positive_output_matches' => [qr|\s\*\/\sto\:$loopback_ip\:22|i,
             qr/ACCEPT\s{2}.*\s0\.0\.0\.0\/0\s+tcp\sdpt\:22\s/],
         'server_negative_output_matches' => [qr/\*\/\sto\:$internal_nat_host\:22/i],
         'fw_rule_created' => $NEW_RULE_REQUIRED,
         'fw_rule_removed' => $NEW_RULE_REMOVED,
-        'server_conf' => $cf{'local_nat'},
+        'server_conf' => $cf{"${fw_conf_prefix}_local_nat"},
         'key_file' => $cf{'rc_hmac_b64_key'},
         'iptables_rm_chains_after_server_start' => $YES,
     },
@@ -1377,14 +1445,14 @@
         'function' => \&spa_cycle,
         'cmdline' => "$fwknopCmd -A tcp/22 -a $fake_ip -D $loopback_ip --rc-file " .
             "$cf{'rc_hmac_b64_key'} $verbose_str --nat-local --nat-rand-port",
-        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'local_nat'} -a $cf{'hmac_access'} " .
+        'fwknopd_cmdline' => qq/$fwknopdCmd -c $cf{"${fw_conf_prefix}_local_nat"} -a $cf{'hmac_access'} / .
             "-d $default_digest_file -p $default_pid_file $intf_str",
         'server_positive_output_matches' => [qr|\s\*\/\sto\:$loopback_ip\:22|i,
             qr/ACCEPT\s{2}.*\s0\.0\.0\.0\/0\s+tcp\sdpt\:22\s/],
         'server_negative_output_matches' => [qr/\*\/\sto\:$internal_nat_host\:22/i],
         'fw_rule_created' => $NEW_RULE_REQUIRED,
         'fw_rule_removed' => $NEW_RULE_REMOVED,
-        'server_conf' => $cf{'local_nat'},
+        'server_conf' => $cf{"${fw_conf_prefix}_local_nat"},
     },
     {
         'category' => 'Rijndael+HMAC',
@@ -1393,7 +1461,7 @@
         'function' => \&spa_cycle,
         'cmdline' => "$fwknopCmd -A tcp/22 -a $fake_ip -D $loopback_ip --rc-file " .
             "$cf{'rc_hmac_b64_key'} $verbose_str --nat-rand-port -N $internal_nat_host",
-        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'nat'} -a $cf{'hmac_access'} " .
+        'fwknopd_cmdline' => qq/$fwknopdCmd -c $cf{"${fw_conf_prefix}_nat"} -a $cf{'hmac_access'} / .
             "-d $default_digest_file -p $default_pid_file $intf_str",
         'server_positive_output_matches' => [
             qr/FWKNOP_FORWARD.*dport\s22\s.*\sACCEPT/,
@@ -1401,7 +1469,7 @@
         ],
         'fw_rule_created' => $NEW_RULE_REQUIRED,
         'fw_rule_removed' => $NEW_RULE_REMOVED,
-        'server_conf' => $cf{'nat'},
+        'server_conf' => $cf{"${fw_conf_prefix}_nat"},
     },
     {
         'category' => 'Rijndael+HMAC',
@@ -1410,7 +1478,7 @@
         'function' => \&spa_cycle,
         'cmdline' => "$fwknopCmd -A tcp/22 -a $fake_ip -D $loopback_ip --rc-file " .
             "$cf{'rc_hmac_nat_rand_b64_key'} $verbose_str -N $internal_nat_host",
-        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'nat'} -a $cf{'hmac_access'} " .
+        'fwknopd_cmdline' => qq/$fwknopdCmd -c $cf{"${fw_conf_prefix}_nat"} -a $cf{'hmac_access'} / .
             "-d $default_digest_file -p $default_pid_file $intf_str",
         'server_positive_output_matches' => [
             qr/FWKNOP_FORWARD.*dport\s22\s.*\sACCEPT/,
@@ -1418,7 +1486,7 @@
         ],
         'fw_rule_created' => $NEW_RULE_REQUIRED,
         'fw_rule_removed' => $NEW_RULE_REMOVED,
-        'server_conf' => $cf{'nat'},
+        'server_conf' => $cf{"${fw_conf_prefix}_nat"},
     },
     {
         'category' => 'Rijndael+HMAC',
@@ -1427,7 +1495,7 @@
         'function' => \&spa_cycle,
         'cmdline' => "$fwknopCmd -A tcp/22 -a $fake_ip -D $loopback_ip --rc-file " .
             "$cf{'rc_hmac_b64_key'} $verbose_str --nat-rand-port -N $internal_nat_host:40001",
-        'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'nat'} -a $cf{'hmac_access'} " .
+        'fwknopd_cmdline' => qq/$fwknopdCmd -c $cf{"${fw_conf_prefix}_nat"} -a $cf{'hmac_access'} / .
             "-d $default_digest_file -p $default_pid_file $intf_str",
         'server_positive_output_matches' => [
             qr/FWKNOP_FORWARD.*dport\s40001\s.*\sACCEPT/,
@@ -1435,13 +1503,13 @@
         ],
         'fw_rule_created' => $NEW_RULE_REQUIRED,
         'fw_rule_removed' => $NEW_RULE_REMOVED,
-        'server_conf' => $cf{'nat'},
+        'server_conf' => $cf{"${fw_conf_prefix}_nat"},
     },
 
     {
         'category' => 'Rijndael+HMAC',
         'subcategory' => 'client+server',
-        'detail'   => 'iptables rules not duplicated',
+        'detail'   => "$FW_TYPE rules not duplicated",
         'function' => \&iptables_rules_not_duplicated,
         'cmdline'  => "$default_client_hmac_args --test",
         'fwknopd_cmdline' => "$fwknopdCmd -c $cf{'def'} -a $cf{'hmac_access'} " .

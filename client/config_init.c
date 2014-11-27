@@ -1791,7 +1791,7 @@ validate_options(fko_cli_options_t *options)
         strlcpy(options->use_rc_stanza, options->spa_server_str, sizeof(options->use_rc_stanza));
     }
 
-    /* Gotta have a Destination unless we are just testing or getting the
+    /* Must have a destination unless we are just testing or getting the
      * the version, and must use one of [-s|-R|-a].
     */
     if(!options->test
@@ -1824,13 +1824,21 @@ validate_options(fko_cli_options_t *options)
                 log_msg(LOG_VERBOSITY_WARNING,
                     "[-] WARNING: Should use -a or -R to harden SPA against potential MITM attacks");
             }
+        }
+    }
 
-            if(! is_valid_ipv4_addr(options->allow_ip_str))
-            {
-                log_msg(LOG_VERBOSITY_ERROR,
-                    "Invalid allow IP specified for SPA access");
-                exit(EXIT_FAILURE);
-            }
+    /* Make sure -a overrides IP resolution
+    */
+    if(options->allow_ip_str[0] != 0x0
+            && strncasecmp(options->allow_ip_str, "resolve", strlen("resolve")) != 0)
+    {
+        options->resolve_ip_http_https = 0;
+
+        if(! is_valid_ipv4_addr(options->allow_ip_str))
+        {
+            log_msg(LOG_VERBOSITY_ERROR,
+                "Invalid allow IP specified for SPA access");
+            exit(EXIT_FAILURE);
         }
     }
 
@@ -1855,6 +1863,12 @@ validate_options(fko_cli_options_t *options)
         if (options->http_user_agent[0] == '\0')
             snprintf(options->http_user_agent, HTTP_MAX_USER_AGENT_LEN,
                 "%s%s", "Fwknop/", MY_VERSION);
+
+#if AFL_FUZZING
+    /* Don't issue IP resolution requests in AFL fuzzing mode
+    */
+    options->resolve_ip_http_https = 0;
+#endif
 
     if(options->http_proxy[0] != 0x0 && options->spa_proto != FKO_PROTO_HTTP)
     {
@@ -2482,7 +2496,10 @@ usage(void)
       "                             the source IP address.\n"
       " -u, --user-agent            Set the HTTP User-Agent for resolving the\n"
       "                             external IP via -R, or for sending SPA\n"
-      "                             packets over HTTP.\n"
+      "                             packets over HTTP. The default is\n"
+      "                             Fwknop/<version> if this option is not used.\n"
+      "     --use-wget-user-agent   Use the default wget User-Agent string instead\n"
+      "                             of Fwknop/<version>.\n"
       " -w, --wget-cmd              Manually set the path to wget in -R mode.\n"
       " -H, --http-proxy            Specify an HTTP proxy host through which the\n"
       "                             SPA packet will be sent.  The port can also be\n"
